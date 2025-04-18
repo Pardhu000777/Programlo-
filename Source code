@@ -1,0 +1,193 @@
+package program_lo;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import java.sql.*;
+
+public class Program_lo extends JFrame {
+    private static final String URL = "jdbc:sqlite:C:\\Users\\sripa\\OneDrive\\Desktop\\Apps\\javaapp.db";
+
+    private JTextField txtCode, txtNo, txtName, txtDetails;
+    private JTextArea txtDisplay;
+    private JButton btnAdd, btnRetrieve, btnUpdate, btnDelete;
+
+    public Program_lo() {
+        setTitle("Program LO Management");
+        setSize(750, 550);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JPanel inputPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        inputPanel.add(new JLabel("Code:"), gbc);
+        gbc.gridx = 1;
+        txtCode = new JTextField(15);
+        inputPanel.add(txtCode, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        inputPanel.add(new JLabel("Number:"), gbc);
+        gbc.gridx = 1;
+        txtNo = new JTextField(10);
+        inputPanel.add(txtNo, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        inputPanel.add(new JLabel("Name:"), gbc);
+        gbc.gridx = 1;
+        txtName = new JTextField(20);
+        inputPanel.add(txtName, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        inputPanel.add(new JLabel("Details:"), gbc);
+        gbc.gridx = 1;
+        txtDetails = new JTextField(30);
+        inputPanel.add(txtDetails, gbc);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        btnAdd = new JButton("Add");
+        btnRetrieve = new JButton("Retrieve");
+        btnUpdate = new JButton("Update");
+        btnDelete = new JButton("Delete");
+
+        buttonPanel.add(btnAdd);
+        buttonPanel.add(btnRetrieve);
+        buttonPanel.add(btnUpdate);
+        buttonPanel.add(btnDelete);
+
+        txtDisplay = new JTextArea(15, 60);
+        txtDisplay.setEditable(false);
+        txtDisplay.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JScrollPane scrollPane = new JScrollPane(txtDisplay);
+
+        mainPanel.add(inputPanel, BorderLayout.NORTH);
+        mainPanel.add(buttonPanel, BorderLayout.CENTER);
+        mainPanel.add(scrollPane, BorderLayout.SOUTH);
+
+        add(mainPanel);
+
+        btnAdd.addActionListener(e -> AP22110010372_programlo_create());
+        btnRetrieve.addActionListener(e -> AP22110010372_programlo_Retrieve());
+        btnUpdate.addActionListener(e -> AP22110010372_programlo_Update());
+        btnDelete.addActionListener(e -> AP22110010372_programlo_Delete());
+
+        setVisible(true);
+    }
+
+    private Connection connect() {
+        try {
+            Class.forName("org.sqlite.JDBC");
+            return DriverManager.getConnection(URL);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Database Connection Error: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private void clearFields() {
+        txtCode.setText("");
+        txtNo.setText("");
+        txtName.setText("");
+        txtDetails.setText("");
+    }
+
+    private void AP22110010372_programlo_create() {
+        String sql = "INSERT INTO program_lo (prog_lo_code, prog_lo_no, prog_lo_name, prog_lo_details) VALUES (?, ?, ?, ?)";
+        try (Connection conn = connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, txtCode.getText());
+            pstmt.setString(2, txtNo.getText());
+            pstmt.setString(3, txtName.getText());
+            pstmt.setString(4, txtDetails.getText());
+            pstmt.executeUpdate();
+            JOptionPane.showMessageDialog(this, "Program LO Added Successfully!");
+            clearFields();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Insert Error: " + e.getMessage());
+        }
+    }
+
+    private void AP22110010372_programlo_Retrieve() {
+        String sql = "SELECT * FROM program_lo";
+        txtDisplay.setText("");
+        try (Connection conn = connect(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                txtDisplay.append("ID: " + rs.getInt("ID") +
+                        ", Code: " + rs.getString("prog_lo_code") +
+                        ", No: " + rs.getString("prog_lo_no") +
+                        ", Name: " + rs.getString("prog_lo_name") +
+                        ", Details: " + rs.getString("prog_lo_details") + "\n");
+            }
+            clearFields();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Fetch Error: " + e.getMessage());
+        }
+    }
+
+    private void AP22110010372_programlo_Update() {
+        if (txtCode.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter Code");
+            return;
+        }
+
+        String sql = "UPDATE program_lo SET prog_lo_no = ?, prog_lo_name = ?, prog_lo_details = ? WHERE prog_lo_code = ?";
+        try (Connection conn = connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, txtNo.getText());
+            pstmt.setString(2, txtName.getText());
+            pstmt.setString(3, txtDetails.getText());
+            pstmt.setString(4, txtCode.getText());
+
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(this, "Program LO Updated Successfully!");
+                clearFields();
+            } else {
+                JOptionPane.showMessageDialog(this, "No record found with Code: " + txtCode.getText());
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Update Error: " + e.getMessage());
+        }
+    }
+
+    private void AP22110010372_programlo_Delete() {
+        if (txtCode.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter Code");
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to delete Program LO with Code: " + txtCode.getText() + "?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION
+        );
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        String sql = "DELETE FROM program_lo WHERE prog_lo_code = ?";
+        try (Connection conn = connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, txtCode.getText());
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(this, "Program LO Deleted Successfully!");
+                clearFields();
+            } else {
+                JOptionPane.showMessageDialog(this, "No record found with Code: " + txtCode.getText());
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Delete Error: " + e.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(Program_lo::new);
+    }
+}
